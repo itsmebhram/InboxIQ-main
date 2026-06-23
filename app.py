@@ -5,11 +5,6 @@ import numpy as np
 
 app = Flask(__name__)
 
-with open('model/vectorizer.pkl', 'rb') as f:
-    vectorizer = pickle.load(f)
-with open('model/model.pkl', 'rb') as f:
-    model = pickle.load(f)
-
 SPAM_KEYWORDS = [
     'free', 'win', 'winner', 'won', 'prize', 'claim', 'urgent', 'click',
     'call now', 'limited', 'offer', 'cash', 'reward', 'selected', 'congrats',
@@ -44,10 +39,11 @@ def analyze_message(text):
         'special_chars': special_chars,
         'caps_ratio': caps_ratio
     }
+
 @app.route('/ping', methods=['GET', 'HEAD'])
 def ping():
     return "OK", 200
-    
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -59,6 +55,12 @@ def predict():
 
     if not message:
         return jsonify({'error': 'Empty message'}), 400
+
+    # Load models on demand to save initial RAM
+    with open('model/vectorizer.pkl', 'rb') as f:
+        vectorizer = pickle.load(f)
+    with open('model/model.pkl', 'rb') as f:
+        model = pickle.load(f)
 
     cleaned = clean_text(message)
     vectorized = vectorizer.transform([cleaned])
